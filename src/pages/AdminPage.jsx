@@ -1,7 +1,6 @@
 // src/pages/AdminPage.jsx
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, where, serverTimestamp, db } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';

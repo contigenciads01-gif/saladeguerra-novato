@@ -1,7 +1,6 @@
 // src/components/InspirationTab.jsx
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, orderBy, query, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { collection, onSnapshot, orderBy, query, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, db } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Star, Plus, Pencil, Trash2, Check, X, ExternalLink } from 'lucide-react';

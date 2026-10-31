@@ -1,8 +1,6 @@
 // src/components/EditModelModal.jsx
 import { useState, useRef } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase/config';
+import { doc, setDoc, serverTimestamp, ref, uploadBytes, getDownloadURL, db, storage } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { X, Upload, User } from 'lucide-react';

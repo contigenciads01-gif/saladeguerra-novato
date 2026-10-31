@@ -1,7 +1,6 @@
 // src/components/HelpModal.jsx
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc, db } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { X, Hand } from 'lucide-react';

@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react';
 import {
   collection, onSnapshot, query, orderBy, doc, getDoc,
-  where, limit
-} from 'firebase/firestore';
-import { db } from '../firebase/config';
+  where, limit, db
+} from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import BottomNav from '../components/BottomNav';
 import MyModelCard from '../components/MyModelCard';
