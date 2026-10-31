@@ -11,7 +11,8 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  isFirebaseConfigured
+  isFirebaseConfigured,
+  updateUserPassword
 } from '../services/db';
 
 const AuthContext = createContext(null);
@@ -30,10 +31,11 @@ export function AuthProvider({ children }) {
           if (snap.exists()) {
             setProfile(snap.data());
           } else {
-            // fallback se documento ainda não existir
+            const isCowboy = activeUser.displayName?.toLowerCase() === 'cowboy';
             setProfile({
+              id: activeUser.uid,
               nome: activeUser.displayName || 'Aluno',
-              role: activeUser.displayName === 'admin' ? 'admin' : 'aluno'
+              role: isCowboy ? 'admin' : 'aluno'
             });
           }
         } catch (err) {
@@ -55,10 +57,13 @@ export function AuthProvider({ children }) {
     const email = fakeEmail(cleanNome);
     const cred = await createUserWithEmailAndPassword(auth, email, senha, cleanNome);
     const uid = cred.user.uid;
+    const isCowboy = cleanNome.toLowerCase() === 'cowboy';
+
     const userDoc = {
+      id: uid,
       nome: cleanNome,
       email,
-      role: cleanNome.toLowerCase() === 'admin' ? 'admin' : 'aluno',
+      role: isCowboy ? 'admin' : 'aluno',
       createdAt: serverTimestamp(),
     };
     await setDoc(doc(db, 'usuarios', uid), userDoc, { merge: true });
@@ -69,11 +74,17 @@ export function AuthProvider({ children }) {
   async function login(nome, senha) {
     const cleanNome = nome.trim();
     const email = fakeEmail(cleanNome);
-    const res = await signInWithEmailAndPassword(auth, email, senha);
-    // Carrega perfil
+    const res = await signInWithEmailAndPassword(auth, email, senha, cleanNome);
     const snap = await getDoc(doc(db, 'usuarios', res.user.uid));
     if (snap.exists()) {
       setProfile(snap.data());
+    } else {
+      const isCowboy = cleanNome.toLowerCase() === 'cowboy';
+      setProfile({
+        id: res.user.uid,
+        nome: cleanNome,
+        role: isCowboy ? 'admin' : 'aluno'
+      });
     }
     return res;
   }
@@ -84,10 +95,26 @@ export function AuthProvider({ children }) {
     setProfile(null);
   }
 
-  const isAdmin = profile?.role === 'admin';
+  async function alterarSenha(novaSenha) {
+    if (!user?.uid) throw new Error('Nenhum usuário conectado');
+    await updateUserPassword(user.uid, novaSenha);
+    return true;
+  }
+
+  const isAdmin = profile?.role === 'admin' || profile?.nome?.toLowerCase() === 'cowboy';
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isFirebaseConfigured, cadastrar, login, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      loading,
+      isAdmin,
+      isFirebaseConfigured,
+      cadastrar,
+      login,
+      logout,
+      alterarSenha
+    }}>
       {children}
     </AuthContext.Provider>
   );

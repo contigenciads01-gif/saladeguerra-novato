@@ -1,8 +1,15 @@
 // src/pages/FeedPage.jsx
 import { useEffect, useState } from 'react';
 import {
-  collection, onSnapshot, query, orderBy, doc, getDoc,
-  where, limit, db
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  doc,
+  getDoc,
+  where,
+  limit,
+  db
 } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import BottomNav from '../components/BottomNav';
@@ -14,7 +21,7 @@ import InspirationTab from '../components/InspirationTab';
 import ProfileTab from '../components/ProfileTab';
 import EditModelModal from '../components/EditModelModal';
 import CowboyLogo from '../components/CowboyLogo';
-import { Shield } from 'lucide-react';
+import { Shield, Sparkles, Users } from 'lucide-react';
 
 export default function FeedPage() {
   const { user, profile, isAdmin } = useAuth();
@@ -26,7 +33,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Minha modelo (real-time)
+  // Minha modelo (tempo real)
   useEffect(() => {
     if (!user) return;
     const unsub = onSnapshot(doc(db, 'modelos', user.uid), snap => {
@@ -36,7 +43,7 @@ export default function FeedPage() {
     return unsub;
   }, [user]);
 
-  // Meu pedido de ajuda pendente (real-time)
+  // Meu pedido de ajuda pendente (tempo real)
   useEffect(() => {
     if (!user) return;
     const pedidoQuery = query(
@@ -52,7 +59,7 @@ export default function FeedPage() {
     return unsub;
   }, [user]);
 
-  // Todas as modelos dos outros alunos
+  // Modelos dos outros alunos
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, 'modelos'), orderBy('createdAt', 'desc'));
@@ -75,39 +82,56 @@ export default function FeedPage() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-bg relative">
+    <div className="min-h-screen bg-bg relative selection:bg-cyan-neon selection:text-bg">
       <div className="fog-bg" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-bg/90 backdrop-blur border-b border-cyan-neon/20 px-4 py-3">
+      {/* Header Superior Fixo */}
+      <header className="sticky top-0 z-30 bg-[#070B12]/95 backdrop-blur-md border-b border-cyan-neon/25 px-4 py-3 shadow-lg">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CowboyLogo size={32} />
+          <div className="flex items-center gap-3">
+            <CowboyLogo size={34} className="drop-shadow-[0_0_8px_#00E5FF]" />
             <div>
-              <h1 className="display-title text-lg leading-none">SALA DE GUERRA</h1>
-              <p className="text-[10px] text-cyan-neon/50 tracking-widest">ETAPA 1</p>
+              <h1 className="display-title text-xl leading-none text-transparent bg-clip-text bg-gradient-to-r from-ice to-cyan-neon">
+                SALA DE GUERRA
+              </h1>
+              <p className="text-[10px] text-cyan-neon/70 font-bold tracking-widest uppercase mt-0.5">
+                ETAPA 1
+              </p>
             </div>
           </div>
+
           {isAdmin && (
-            <a href="/admin"
-               className="flex items-center gap-1.5 text-xs border border-cyan-neon/40 text-cyan-neon
-                          px-3 py-1.5 rounded-xl hover:shadow-neon transition-all">
-              <Shield size={12} /> Painel Admin
+            <a
+              href="/admin"
+              className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl border border-cyan-neon/40 text-cyan-neon hover:bg-cyan-neon/10 hover:shadow-neon transition-all"
+            >
+              <Shield size={14} /> Painel CowBoy
             </a>
           )}
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-lg mx-auto px-4 pt-4 pb-24 relative z-10">
+      {/* Conteúdo Principal */}
+      <main className="max-w-lg mx-auto px-4 pt-5 pb-28 relative z-10">
         {activeTab === 'feed' && (
-          <div className="space-y-6">
-            {/* Minha modelo */}
+          <div className="space-y-7 animate-fade-in">
+            {/* Minha Modelo */}
             <div>
-              <p className="display-title text-base text-silver/60 mb-3">🎯 SUA MODELO</p>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <p className="display-title text-base flex items-center gap-1.5 text-cyan-neon">
+                  <Sparkles size={16} /> SUA MODELO
+                </p>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-silver/40">
+                  SEU DASHBOARD
+                </span>
+              </div>
+
               {!minhaModeloLoaded ? (
-                <div className="card-neon p-8 text-center">
-                  <p className="text-silver/40 animate-pulse">Carregando...</p>
+                <div className="card-neon p-12 text-center rounded-2xl">
+                  <div className="w-8 h-8 border-2 border-cyan-neon border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-silver/50 text-xs font-semibold animate-pulse">
+                    Carregando sua modelo...
+                  </p>
                 </div>
               ) : minhaModelo ? (
                 <MyModelCard
@@ -122,27 +146,35 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Modelos da turma */}
-            {(loading || outrasModelos.length > 0) && (
-              <div>
-                <p className="display-title text-base text-silver/60 mb-3">👥 MODELOS DA TURMA</p>
-                {loading ? (
-                  <p className="text-silver/40 text-center py-8 animate-pulse">Carregando...</p>
-                ) : (
-                  <div className="space-y-6">
-                    {outrasModelos.map(({ id, modelo, nomeAluno }) => (
-                      <ModelCard key={id} modelo={modelo} nomeAluno={nomeAluno} />
-                    ))}
-                  </div>
-                )}
+            {/* Modelos dos Colegas de Turma */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <p className="display-title text-base flex items-center gap-1.5 text-silver/80">
+                  <Users size={16} className="text-cyan-neon/70" /> MODELOS DA TURMA
+                </p>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-silver/40">
+                  {outrasModelos.length} ATIVA{outrasModelos.length !== 1 ? 'S' : ''}
+                </span>
               </div>
-            )}
 
-            {!loading && outrasModelos.length === 0 && minhaModelo && (
-              <p className="text-silver/30 text-center py-8 text-sm">
-                Você é o(a) primeiro(a)! Aguarde os outros alunos.
-              </p>
-            )}
+              {loading ? (
+                <div className="card-neon p-8 text-center rounded-2xl">
+                  <p className="text-silver/40 text-xs animate-pulse">Carregando modelos da turma...</p>
+                </div>
+              ) : outrasModelos.length > 0 ? (
+                <div className="space-y-6">
+                  {outrasModelos.map(({ id, modelo, nomeAluno }) => (
+                    <ModelCard key={id} modelo={modelo} nomeAluno={nomeAluno} />
+                  ))}
+                </div>
+              ) : (
+                <div className="card-neon p-8 text-center rounded-2xl border-dashed border-cyan-neon/20 bg-white/[0.01]">
+                  <p className="text-silver/40 text-xs">
+                    Nenhum outro aluno publicou uma modelo ainda.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -151,8 +183,10 @@ export default function FeedPage() {
         {activeTab === 'perfil' && <ProfileTab />}
       </main>
 
+      {/* Navegação Inferior */}
       <BottomNav active={activeTab} onChange={setActiveTab} />
 
+      {/* Modal Criar Modelo */}
       {createOpen && (
         <EditModelModal
           modelo={null}

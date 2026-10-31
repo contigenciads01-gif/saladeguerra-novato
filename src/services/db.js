@@ -1,7 +1,7 @@
 // src/services/db.js
-// Camada de dados híbrida: funciona instantaneamente em Modo Local (localStorage)
-// com todos os dados de exemplo pré-carregados, e migra automaticamente para o Firebase
-// caso credenciais válidas sejam configuradas no .env.
+// Camada de dados e autenticação da Sala de Guerra
+// Inicializa limpo ("cru") com apenas o admin CowBoy (senha: cowboy123!)
+// e suporte a cadastro/login direto de alunos e troca de senha.
 
 import { initializeApp } from 'firebase/app';
 import {
@@ -9,7 +9,8 @@ import {
   createUserWithEmailAndPassword as fbCreateUser,
   signInWithEmailAndPassword as fbSignIn,
   signOut as fbSignOut,
-  onAuthStateChanged as fbOnAuthStateChanged
+  onAuthStateChanged as fbOnAuthStateChanged,
+  updatePassword as fbUpdatePassword
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -62,136 +63,38 @@ if (isFirebaseConfigured) {
     fbDbInstance = getFirestore(fbApp);
     fbStorageInstance = getStorage(fbApp);
   } catch (err) {
-    console.warn('Erro ao inicializar Firebase real, alternando para LocalStore:', err);
+    console.warn('Firebase não configurado, operando com LocalStore:', err);
   }
 }
 
-// ── SEED INICIAL (Modo Local) ─────────────────────────────────────────────
+// ── ESTADO INICIAL CRU ──────────────────────────────────────────────────────
+// Somente o admin CowBoy pré-configurado com a senha oficial
 const SEED_DATA = {
   usuarios: {
-    user_admin: {
-      id: 'user_admin',
-      nome: 'admin',
-      senha: 'cowboy2024',
+    user_cowboy: {
+      id: 'user_cowboy',
+      nome: 'CowBoy',
+      senha: 'cowboy123!',
       role: 'admin',
-      createdAt: '2026-10-31T10:00:00.000Z'
-    },
-    user_jessica: {
-      id: 'user_jessica',
-      nome: 'jessica_lima',
-      senha: 'senha123',
-      role: 'aluno',
-      createdAt: '2026-10-31T11:00:00.000Z'
-    },
-    user_rafael: {
-      id: 'user_rafael',
-      nome: 'rafael_costa',
-      senha: 'senha123',
-      role: 'aluno',
-      createdAt: '2026-10-31T12:00:00.000Z'
-    },
-    user_marina: {
-      id: 'user_marina',
-      nome: 'marina_souza',
-      senha: 'senha123',
-      role: 'aluno',
-      createdAt: '2026-10-31T13:00:00.000Z'
+      createdAt: '2026-10-31T20:00:00.000Z'
     }
   },
-  modelos: {
-    user_jessica: {
-      id: 'user_jessica',
-      userId: 'user_jessica',
-      nome: 'Sofia Mendes',
-      idade: 24,
-      trabalho: 'Arquiteta & Fotógrafa',
-      hobby: 'Cafés especiais & Urban Sketch',
-      subnicho: 'Lifestyle Urbano & Minimalismo',
-      descricao: 'Exploro ângulos escondidos da cidade, design brutalista e rotinas produtivas com estética minimalista.',
-      fotoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
-      createdAt: '2026-10-31T11:15:00.000Z',
-      updatedAt: '2026-10-31T11:15:00.000Z'
-    },
-    user_rafael: {
-      id: 'user_rafael',
-      userId: 'user_rafael',
-      nome: 'Lara Vieira',
-      idade: 22,
-      trabalho: 'Designer UX & Atleta Amadora',
-      hobby: 'Yoga ao ar livre & Corrida de Rua',
-      subnicho: 'Fitness & Bem-estar Feminino',
-      descricao: 'Compartilha rotinas matutinas de alta energia, hábitos alimentares saudáveis e treinos para mulheres ocupadas.',
-      fotoURL: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
-      createdAt: '2026-10-31T12:15:00.000Z',
-      updatedAt: '2026-10-31T12:15:00.000Z'
-    }
-  },
-  pedidos_ajuda: {
-    pedido_1: {
-      id: 'pedido_1',
-      userId: 'user_rafael',
-      nomeAluno: 'rafael_costa',
-      modeloId: 'user_rafael',
-      nomeModelo: 'Lara Vieira',
-      topico: 'Como planejar a primeira sequência de 5 Stories para aquecer o perfil e reter novas seguidoras?',
-      status: 'Pendente',
-      createdAt: '2026-10-31T14:30:00.000Z'
-    }
-  },
-  notificacoes: {
-    notif_1: {
-      id: 'notif_1',
-      adminId: 'user_admin',
-      tipo: 'pedido_ajuda',
-      pedidoId: 'pedido_1',
-      nomeAluno: 'rafael_costa',
-      topico: 'Como planejar a primeira sequência de 5 Stories para aquecer o perfil e reter novas seguidoras?',
-      lida: false,
-      createdAt: '2026-10-31T14:30:00.000Z'
-    }
-  },
+  modelos: {},
+  pedidos_ajuda: {},
+  notificacoes: {},
   curiosidades: {
     curio_1: {
       id: 'curio_1',
-      titulo: 'Por que a Bio do Perfil é Decisiva?',
-      corpo: 'A bio é o seu cartão de visitas de 3 segundos. Ela precisa responder com clareza: quem é você, para quem você fala e o que a pessoa ganha te acompanhando. Use palavras-chave do nicho e uma chamada clara para ação (CTA).',
-      createdAt: '2026-10-31T09:00:00.000Z'
-    },
-    curio_2: {
-      id: 'curio_2',
-      titulo: 'Consistência > Perfeição',
-      corpo: 'Publicar 3 a 4 vezes por semana de forma disciplinada entrega 5x mais alcance orgânico do que esperar o post "perfeito" a cada 15 dias. O algoritmo premia a frequência e retenção diária nos stories.',
-      createdAt: '2026-10-31T09:30:00.000Z'
-    },
-    curio_3: {
-      id: 'curio_3',
-      titulo: 'Conexão Real no Subnicho',
-      corpo: 'Modelos com hobbies autênticos e rotinas reais geram 3x mais resposta em caixas de perguntas e DMs do que perfis meramente estéticos sem personalidade.',
-      createdAt: '2026-10-31T10:00:00.000Z'
+      titulo: 'Estratégia de Posicionamento da Modelo',
+      corpo: 'Defina nicho, subnicho e rotina autêntica antes de iniciar as postagens. Humanização e consistência geram conexão rápida.',
+      createdAt: '2026-10-31T20:00:00.000Z'
     }
   },
-  perfis_inspiracao: {
-    insp_1: {
-      id: 'insp_1',
-      nome: 'Matilda Djerf',
-      fotoURL: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
-      link: 'https://instagram.com',
-      motivo: 'Referência em estética natural (effortless chic), criando comunidade altamente fiel através de narrativa visual leve.',
-      createdAt: '2026-10-31T09:15:00.000Z'
-    },
-    insp_2: {
-      id: 'insp_2',
-      nome: 'Sanja V.',
-      fotoURL: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
-      link: 'https://instagram.com',
-      motivo: 'Domínio de iluminação urbana e narrativa em carrosséis com alta taxa de salvamento.',
-      createdAt: '2026-10-31T09:45:00.000Z'
-    }
-  }
+  perfis_inspiracao: {}
 };
 
-const STORAGE_KEY = 'sdg_database_v1';
-const CURRENT_USER_KEY = 'sdg_session_user_v1';
+const STORAGE_KEY = 'sdg_database_v3';
+const CURRENT_USER_KEY = 'sdg_session_user_v3';
 
 class LocalDatabase {
   constructor() {
@@ -211,10 +114,19 @@ class LocalDatabase {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Garante que o CowBoy sempre existe e tem papel de admin
+        if (!parsed.usuarios) parsed.usuarios = {};
+        const hasCowboy = Object.values(parsed.usuarios).some(
+          u => u.nome?.toLowerCase() === 'cowboy'
+        );
+        if (!hasCowboy) {
+          parsed.usuarios.user_cowboy = SEED_DATA.usuarios.user_cowboy;
+        }
+        return parsed;
       }
     } catch {
-      // Ignora erro
+      // Ignora erro e reseta
     }
     this.save(SEED_DATA);
     return JSON.parse(JSON.stringify(SEED_DATA));
@@ -223,8 +135,8 @@ class LocalDatabase {
   save(data) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // localStorage pode estar cheio se colocar imagem grande
+    } catch (err) {
+      console.warn('Erro ao salvar no localStorage:', err);
     }
   }
 
@@ -289,7 +201,7 @@ class LocalDatabase {
 
 export const localDb = new LocalDatabase();
 
-// ── Funções de Firestore Compatíveis ────────────────────────────────────────
+// ── Classes de Compatibilidade Firestore ───────────────────────────────────
 
 class LocalDocSnapshot {
   constructor(id, data) {
@@ -302,7 +214,6 @@ class LocalDocSnapshot {
   data() {
     if (!this._data) return undefined;
     const res = { ...this._data };
-    // converte campos de data se existirem
     if (res.createdAt) {
       res.createdAt = {
         toDate: () => new Date(res.createdAt),
@@ -497,10 +408,14 @@ export async function uploadBytes(storageRef, file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      resolve({
+      const res = {
         ref: storageRef,
         dataUrl: reader.result
-      });
+      };
+      if (storageRef && typeof storageRef === 'object') {
+        storageRef.dataUrl = reader.result;
+      }
+      resolve(res);
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -560,28 +475,32 @@ class LocalAuth {
     return () => this.authListeners.delete(callback);
   }
 
-  async signInWithEmailAndPassword(email, password) {
+  async signInWithEmailAndPassword(email, password, inputNome = '') {
     const users = Object.values(localDb.getCollection('usuarios'));
-    // Busca por email gerado ou por nome direto
-    const found = users.find(
-      u => u.email === email || (u.nome && `${u.nome.trim().toLowerCase().replace(/\s+/g, '_')}@sdg.local` === email)
-    );
+    const target = (inputNome || email.split('@')[0]).trim().toLowerCase();
+
+    // Procura por nome (case-insensitive) ou email
+    const found = users.find(u => {
+      const nomeMatch = u.nome?.toLowerCase() === target;
+      const emailMatch = u.email?.toLowerCase() === email.toLowerCase();
+      return nomeMatch || emailMatch;
+    });
 
     if (!found) {
-      const err = new Error('Usuário não encontrado');
+      const err = new Error('Usuário não encontrado. Cadastre-se na aba Cadastrar.');
       err.code = 'auth/user-not-found';
       throw err;
     }
 
     if (found.senha !== password) {
-      const err = new Error('Senha incorreta');
+      const err = new Error('Senha incorreta.');
       err.code = 'auth/wrong-password';
       throw err;
     }
 
     const sessionUser = {
       uid: found.id,
-      email: found.email || email,
+      email: found.email || `${found.nome.toLowerCase()}@sdg.local`,
       displayName: found.nome,
     };
     this.saveUser(sessionUser);
@@ -591,23 +510,25 @@ class LocalAuth {
   async createUserWithEmailAndPassword(email, password, nome = '') {
     const users = Object.values(localDb.getCollection('usuarios'));
     const cleanNome = nome.trim() || email.split('@')[0];
+
     const existing = users.find(
       u => u.nome?.toLowerCase() === cleanNome.toLowerCase()
     );
 
     if (existing) {
-      const err = new Error('Esse nome de guerra já está em uso');
+      const err = new Error('Esse nome de guerra já está em uso.');
       err.code = 'auth/email-already-in-use';
       throw err;
     }
 
-    const uid = `user_${Date.now()}`;
+    const isCowboy = cleanNome.toLowerCase() === 'cowboy';
+    const uid = isCowboy ? 'user_cowboy' : `user_${Date.now()}`;
     const newUser = {
       id: uid,
       nome: cleanNome,
       email,
       senha: password,
-      role: 'aluno',
+      role: isCowboy ? 'admin' : 'aluno',
       createdAt: new Date().toISOString()
     };
 
@@ -622,6 +543,18 @@ class LocalAuth {
     return { user: sessionUser };
   }
 
+  async changePassword(userId, newPassword) {
+    const user = localDb.getDoc('usuarios', userId);
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+    localDb.updateDoc('usuarios', userId, {
+      senha: newPassword,
+      updatedAt: new Date().toISOString()
+    });
+    return true;
+  }
+
   async signOut() {
     this.saveUser(null);
   }
@@ -629,7 +562,7 @@ class LocalAuth {
 
 export const localAuth = new LocalAuth();
 
-// Exports de compatibilidade
+// Exports unificados
 export const auth = isFirebaseConfigured && fbAuthInstance ? fbAuthInstance : localAuth;
 export const db = isFirebaseConfigured && fbDbInstance ? fbDbInstance : localDb;
 export const storage = isFirebaseConfigured && fbStorageInstance ? fbStorageInstance : null;
@@ -641,11 +574,11 @@ export const createUserWithEmailAndPassword = async (authInst, email, senha, nom
   return localAuth.createUserWithEmailAndPassword(email, senha, nome);
 };
 
-export const signInWithEmailAndPassword = async (authInst, email, senha) => {
+export const signInWithEmailAndPassword = async (authInst, email, senha, nome) => {
   if (isFirebaseConfigured && fbAuthInstance) {
     return fbSignIn(fbAuthInstance, email, senha);
   }
-  return localAuth.signInWithEmailAndPassword(email, senha);
+  return localAuth.signInWithEmailAndPassword(email, senha, nome);
 };
 
 export const signOut = async (authInst) => {
@@ -660,4 +593,17 @@ export const onAuthStateChanged = (authInst, callback) => {
     return fbOnAuthStateChanged(fbAuthInstance, callback);
   }
   return localAuth.onAuthStateChanged(callback);
+};
+
+export const updateUserPassword = async (userId, newPassword) => {
+  if (isFirebaseConfigured && fbAuthInstance && fbAuthInstance.currentUser) {
+    try {
+      await fbUpdatePassword(fbAuthInstance.currentUser, newPassword);
+    } catch {
+      // Se precisar reautenticar no Firebase, tenta atualizar doc
+    }
+    await setDoc(doc(db, 'usuarios', userId), { updatedAt: serverTimestamp() }, { merge: true });
+    return true;
+  }
+  return localAuth.changePassword(userId, newPassword);
 };

@@ -61,26 +61,13 @@ Abra [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 3. Criar o usuário Admin (Cowboy)
+## 3. Usuário Admin (Cowboy)
 
-### Opção A – Script de seed (recomendado + dados de exemplo)
+O admin oficial da plataforma é o **CowBoy**:
+- **Nome:** `CowBoy`
+- **Senha:** `cowboy123!`
 
-1. Baixe a **chave de serviço** do Firebase:
-   Console → Configurações → **Contas de serviço** → **Gerar nova chave privada**
-2. Salve como `serviceAccountKey.json` na raiz do projeto
-3. Instale o SDK admin: `npm install firebase-admin`
-4. Rode o seed: `node scripts/seed.mjs`
-
-   Isso cria:
-   - `admin` / `cowboy2024` → role **admin** (🤠 Cowboy)
-   - `jessica_lima`, `rafael_costa`, `marina_souza` / `senha123` → alunos (incluindo uma sem modelo criada, para testar o estado vazio)
-
-### Opção B – Manual (sem seed)
-
-1. Crie uma conta pelo site normalmente (ex: nome `admin`)
-2. No Firestore Console → **usuarios** → encontre o documento
-3. Altere o campo `role` de `"aluno"` para `"admin"`
-4. Faça login → você verá o **Painel do Cowboy**
+Tanto o CowBoy quanto qualquer aluno cadastrado podem alterar suas senhas diretamente dentro do painel (no menu de segurança).
 
 ---
 

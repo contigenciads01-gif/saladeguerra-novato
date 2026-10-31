@@ -47,8 +47,8 @@ export default function EditModelModal({ modelo, onClose, onSaved }) {
       let fotoURL = modelo?.fotoURL || '';
       if (file) {
         const storageRef = ref(storage, `modelos/${user.uid}/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        fotoURL = await getDownloadURL(storageRef);
+        const uploadRes = await uploadBytes(storageRef, file);
+        fotoURL = await getDownloadURL(uploadRes);
       }
       const data = {
         ...form,
