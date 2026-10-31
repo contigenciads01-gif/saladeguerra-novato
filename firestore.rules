@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ───────────────────────────────────────────
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isLoggedIn() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ─── usuarios ──────────────────────────────────────────
+    match /usuarios/{uid} {
+      // Qualquer logado pode ler a lista (para montar o feed)
+      allow read: if isLoggedIn();
+      // Criação: o próprio usuário (no cadastro) ou admin
+      allow create: if isOwner(uid) || isAdmin();
+      // Edição: só admin pode alterar role; dono pode atualizar dados básicos
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── modelos ───────────────────────────────────────────
+    match /modelos/{uid} {
+      // Todos os logados podem LER as modelos (feed)
+      allow read: if isLoggedIn();
+      // Criar/editar: somente o dono do documento
+      allow create, update: if isLoggedIn() && isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    // ─── pedidos_ajuda ─────────────────────────────────────
+    match /pedidos_ajuda/{pedidoId} {
+      // Aluno cria o próprio pedido
+      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
+      // Aluno lê e edita apenas os próprios; admin lê e edita todos
+      allow read, update: if isLoggedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─── curiosidades ──────────────────────────────────────
+    match /curiosidades/{id} {
+      allow read: if isLoggedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── perfis_inspiracao ─────────────────────────────────
+    match /perfis_inspiracao/{id} {
+      allow read: if isLoggedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── notificacoes ──────────────────────────────────────
+    match /notificacoes/{id} {
+      // Aluno pode criar notificações (ao levantar a mão)
+      allow create: if isLoggedIn();
+      // Só o admin lê e edita suas notificações
+      allow read, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Modelos: cada aluno sobe imagens apenas na pasta dele
+    match /modelos/{uid}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Perfis para inspirar: só admin faz upload (via console)
+    match /perfis_inspiracao/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // gerenciado pelo admin via Console
+    }
+  }
+}

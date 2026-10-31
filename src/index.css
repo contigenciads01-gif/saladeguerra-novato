@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-bg text-ice font-body;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #05070A;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #00E5FF44;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  .btn-neon {
+    @apply px-6 py-2 rounded-xl border border-cyan-neon text-cyan-neon font-semibold
+           transition-all duration-200 hover:shadow-neon hover:bg-cyan-neon/10
+           active:scale-95 cursor-pointer;
+  }
+
+  .btn-neon-filled {
+    @apply px-6 py-2 rounded-xl bg-cyan-neon text-bg font-bold
+           transition-all duration-200 hover:shadow-neon-lg hover:bg-cyan-soft
+           active:scale-95 cursor-pointer;
+  }
+
+  .card-neon {
+    @apply bg-white/5 border border-cyan-neon/30 rounded-2xl
+           transition-all duration-200 hover:border-cyan-neon/60 hover:shadow-neon-sm;
+  }
+
+  .card-mine {
+    @apply bg-white/5 border-2 border-cyan-neon rounded-2xl shadow-neon;
+  }
+
+  .input-neon {
+    @apply w-full bg-white/5 border border-cyan-neon/40 rounded-xl px-4 py-3
+           text-ice placeholder-silver/50 outline-none
+           focus:border-cyan-neon focus:shadow-neon-sm transition-all duration-200;
+  }
+
+  .display-title {
+    @apply font-display tracking-widest text-cyan-neon uppercase italic;
+  }
+
+  .fog-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 20% 50%, #00E5FF0A 0%, transparent 70%),
+      radial-gradient(ellipse 60% 30% at 80% 20%, #00E5FF06 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 50% 80%, #22D3EE05 0%, transparent 70%);
+  }
+}
